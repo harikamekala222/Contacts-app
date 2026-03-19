@@ -5,17 +5,21 @@ const API_URL = "http://localhost:5000";
 
 function App() {
   const [contacts, setContacts] = useState([]);
-  const [form, setForm] = useState({ name: "", phone: "", email: "" });
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    email: ""
+  });
   const [editId, setEditId] = useState(null);
   const [viewContact, setViewContact] = useState(null);
 
-  // Fetch
+  // Fetch contacts
   const fetchContacts = async () => {
     try {
       const res = await axios.get(`${API_URL}/contacts`);
       setContacts(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch Error:", err);
     }
   };
 
@@ -23,12 +27,12 @@ function App() {
     fetchContacts();
   }, []);
 
-  // Input
+  // Handle input
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Submit
+  // Add / Update
   const handleSubmit = async () => {
     if (!form.name || !form.phone || !form.email) {
       alert("All fields required");
@@ -38,15 +42,15 @@ function App() {
     try {
       if (editId) {
         await axios.put(`${API_URL}/contacts/${editId}`, form);
+        setEditId(null);
       } else {
         await axios.post(`${API_URL}/contacts`, form);
       }
 
       setForm({ name: "", phone: "", email: "" });
-      setEditId(null);
       fetchContacts();
     } catch (err) {
-      console.error(err);
+      console.error("Submit Error:", err);
     }
   };
 
@@ -56,11 +60,11 @@ function App() {
       await axios.delete(`${API_URL}/contacts/${id}`);
       fetchContacts();
     } catch (err) {
-      console.error(err);
+      console.error("Delete Error:", err);
     }
   };
 
-  // Edit
+  // Edit (FIXED)
   const handleEdit = (contact) => {
     setForm({
       name: contact.name,
@@ -77,7 +81,7 @@ function App() {
 
   return (
     <div style={styles.container}>
-      <h2>📒 Contacts App</h2>
+      <h2 style={styles.title}>📒 Contacts App</h2>
 
       {/* FORM */}
       <div style={styles.form}>
@@ -86,21 +90,24 @@ function App() {
           placeholder="Name"
           value={form.name}
           onChange={handleChange}
+          style={styles.input}
         />
         <input
           name="phone"
           placeholder="Phone"
           value={form.phone}
           onChange={handleChange}
+          style={styles.input}
         />
         <input
           name="email"
           placeholder="Email"
           value={form.email}
           onChange={handleChange}
+          style={styles.input}
         />
 
-        <button type="button" onClick={handleSubmit}>
+        <button type="button" onClick={handleSubmit} style={styles.button}>
           {editId ? "Update Contact" : "Add Contact"}
         </button>
       </div>
@@ -108,46 +115,113 @@ function App() {
       {/* VIEW */}
       {viewContact && (
         <div style={styles.viewBox}>
-          <h3>Details</h3>
-          <p>{viewContact.name}</p>
-          <p>{viewContact.phone}</p>
-          <p>{viewContact.email}</p>
+          <h3>Contact Details</h3>
+          <p><b>Name:</b> {viewContact.name}</p>
+          <p><b>Phone:</b> {viewContact.phone}</p>
+          <p><b>Email:</b> {viewContact.email}</p>
 
-          <button onClick={() => setViewContact(null)}>Close</button>
+          <button onClick={() => setViewContact(null)} style={styles.closeBtn}>
+            Close
+          </button>
         </div>
       )}
 
       {/* LIST */}
-      <ul>
-        {contacts.map((c) => (
-          <li key={c.id} style={styles.listItem}>
-            {c.name} | {c.phone}
+      <ul style={styles.list}>
+        {Array.isArray(contacts) &&
+          contacts.map((c) => (
+            <li key={c.id} style={styles.listItem}>
+              <span>
+                <strong>{c.name}</strong> | {c.phone}
+              </span>
 
-            <div>
-              <button onClick={() => handleView(c)}>View</button>
-              <button onClick={() => handleEdit(c)}>Edit</button>
-              <button onClick={() => handleDelete(c.id)}>Delete</button>
-            </div>
-          </li>
-        ))}
+              <div>
+                <button
+                  onClick={() => handleView(c)}
+                  style={styles.viewBtn}
+                >
+                  View
+                </button>
+
+                <button
+                  onClick={() => handleEdit(c)}
+                  style={styles.editBtn}
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => handleDelete(c.id)}
+                  style={styles.deleteBtn}
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
       </ul>
     </div>
   );
 }
 
+// 🎨 SAME YOUR STYLES
 const styles = {
-  container: { maxWidth: "600px", margin: "auto" },
-  form: { display: "flex", flexDirection: "column", gap: "10px" },
+  container: {
+    maxWidth: "600px",
+    margin: "40px auto",
+    fontFamily: "Arial"
+  },
+  title: {
+    textAlign: "center"
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    marginBottom: "20px"
+  },
+  input: {
+    padding: "8px"
+  },
+  button: {
+    padding: "10px",
+    backgroundColor: "green",
+    color: "white",
+    border: "none"
+  },
+  list: {
+    listStyle: "none",
+    padding: 0
+  },
   listItem: {
     display: "flex",
     justifyContent: "space-between",
     padding: "10px",
+    borderBottom: "1px solid #ccc"
   },
   viewBox: {
-    padding: "10px",
-    border: "1px solid black",
-    margin: "10px 0",
+    border: "1px solid #ccc",
+    padding: "15px",
+    marginBottom: "20px",
+    background: "#f9f9f9"
   },
+  viewBtn: {
+    backgroundColor: "#673ab7",
+    color: "white",
+    marginRight: "5px"
+  },
+  editBtn: {
+    backgroundColor: "#2196f3",
+    color: "white",
+    marginRight: "5px"
+  },
+  deleteBtn: {
+    backgroundColor: "#f44336",
+    color: "white"
+  },
+  closeBtn: {
+    marginTop: "10px"
+  }
 };
 
 export default App;
