@@ -52,7 +52,7 @@ pipeline {
                 cp -r backend/* $APP_DIR/
 
                 echo "Copying database..."
-                cp backend/contacts.db $DATA_DIR/
+                cp backend/db.js $DATA_DIR/
 
                 ls -l $APP_DIR
                 '''
