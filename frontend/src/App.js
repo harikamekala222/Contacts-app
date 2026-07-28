@@ -1,25 +1,28 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_URL = "/contacts";
+// Backend URL
+const API_URL = "http://localhost:5000";
 
 function App() {
   const [contacts, setContacts] = useState([]);
   const [form, setForm] = useState({
     name: "",
     phone: "",
-    email: ""
+    email: "",
   });
+
   const [editId, setEditId] = useState(null);
   const [viewContact, setViewContact] = useState(null);
 
-  // Fetch contacts
+  // Fetch Contacts
   const fetchContacts = async () => {
     try {
       const res = await axios.get(`${API_URL}/contacts`);
       setContacts(res.data);
     } catch (err) {
       console.error("Fetch Error:", err);
+      alert("Unable to fetch contacts.");
     }
   };
 
@@ -27,201 +30,264 @@ function App() {
     fetchContacts();
   }, []);
 
-  // Handle input
+  // Input Change
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  // Add / Update
+  // Add / Update Contact
   const handleSubmit = async () => {
     if (!form.name || !form.phone || !form.email) {
-      alert("All fields required");
+      alert("Please fill all fields.");
       return;
     }
 
     try {
       if (editId) {
         await axios.put(`${API_URL}/contacts/${editId}`, form);
+        alert("Contact Updated");
         setEditId(null);
       } else {
         await axios.post(`${API_URL}/contacts`, form);
+        alert("Contact Added");
       }
 
-      setForm({ name: "", phone: "", email: "" });
+      setForm({
+        name: "",
+        phone: "",
+        email: "",
+      });
+
       fetchContacts();
     } catch (err) {
       console.error("Submit Error:", err);
+      alert("Something went wrong.");
     }
   };
 
-  // Delete
+  // Delete Contact
   const handleDelete = async (id) => {
+    if (!window.confirm("Delete this contact?")) return;
+
     try {
       await axios.delete(`${API_URL}/contacts/${id}`);
+      alert("Contact Deleted");
       fetchContacts();
     } catch (err) {
       console.error("Delete Error:", err);
     }
   };
 
-  // Edit (FIXED)
+  // Edit Contact
   const handleEdit = (contact) => {
     setForm({
       name: contact.name,
       phone: contact.phone,
       email: contact.email,
     });
+
     setEditId(contact.id);
   };
 
-  // View
+  // View Contact
   const handleView = (contact) => {
     setViewContact(contact);
   };
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>📒 Contacts App</h2>
+      <h1 style={styles.title}>📒 Contacts App</h1>
 
-      {/* FORM */}
       <div style={styles.form}>
         <input
+          type="text"
           name="name"
-          placeholder="Name"
+          placeholder="Enter Name"
           value={form.name}
           onChange={handleChange}
           style={styles.input}
         />
+
         <input
+          type="text"
           name="phone"
-          placeholder="Phone"
+          placeholder="Enter Phone"
           value={form.phone}
           onChange={handleChange}
           style={styles.input}
         />
+
         <input
+          type="email"
           name="email"
-          placeholder="Email"
+          placeholder="Enter Email"
           value={form.email}
           onChange={handleChange}
           style={styles.input}
         />
 
-        <button type="button" onClick={handleSubmit} style={styles.button}>
+        <button onClick={handleSubmit} style={styles.addButton}>
           {editId ? "Update Contact" : "Add Contact"}
         </button>
       </div>
 
-      {/* VIEW */}
       {viewContact && (
         <div style={styles.viewBox}>
           <h3>Contact Details</h3>
-          <p><b>Name:</b> {viewContact.name}</p>
-          <p><b>Phone:</b> {viewContact.phone}</p>
-          <p><b>Email:</b> {viewContact.email}</p>
 
-          <button onClick={() => setViewContact(null)} style={styles.closeBtn}>
+          <p>
+            <strong>Name :</strong> {viewContact.name}
+          </p>
+
+          <p>
+            <strong>Phone :</strong> {viewContact.phone}
+          </p>
+
+          <p>
+            <strong>Email :</strong> {viewContact.email}
+          </p>
+
+          <button
+            style={styles.closeButton}
+            onClick={() => setViewContact(null)}
+          >
             Close
           </button>
         </div>
       )}
 
-      {/* LIST */}
       <ul style={styles.list}>
-        {Array.isArray(contacts) &&
-          contacts.map((c) => (
-            <li key={c.id} style={styles.listItem}>
-              <span>
-                <strong>{c.name}</strong> | {c.phone}
-              </span>
+        {contacts.map((contact) => (
+          <li key={contact.id} style={styles.listItem}>
+            <div>
+              <strong>{contact.name}</strong>
+              <br />
+              {contact.phone}
+            </div>
 
-              <div>
-                <button
-                  onClick={() => handleView(c)}
-                  style={styles.viewBtn}
-                >
-                  View
-                </button>
+            <div>
+              <button
+                style={styles.viewButton}
+                onClick={() => handleView(contact)}
+              >
+                View
+              </button>
 
-                <button
-                  onClick={() => handleEdit(c)}
-                  style={styles.editBtn}
-                >
-                  Edit
-                </button>
+              <button
+                style={styles.editButton}
+                onClick={() => handleEdit(contact)}
+              >
+                Edit
+              </button>
 
-                <button
-                  onClick={() => handleDelete(c.id)}
-                  style={styles.deleteBtn}
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
+              <button
+                style={styles.deleteButton}
+                onClick={() => handleDelete(contact.id)}
+              >
+                Delete
+              </button>
+            </div>
+          </li>
+        ))}
       </ul>
     </div>
   );
 }
 
-// 🎨 SAME YOUR STYLES
 const styles = {
   container: {
-    maxWidth: "600px",
+    maxWidth: "700px",
     margin: "40px auto",
-    fontFamily: "Arial"
+    fontFamily: "Arial",
+    padding: "20px",
   },
+
   title: {
-    textAlign: "center"
+    textAlign: "center",
+    color: "#333",
   },
+
   form: {
     display: "flex",
     flexDirection: "column",
     gap: "10px",
-    marginBottom: "20px"
+    marginBottom: "20px",
   },
+
   input: {
-    padding: "8px"
-  },
-  button: {
     padding: "10px",
-    backgroundColor: "green",
-    color: "white",
-    border: "none"
+    fontSize: "16px",
   },
+
+  addButton: {
+    padding: "10px",
+    background: "green",
+    color: "#fff",
+    border: "none",
+    cursor: "pointer",
+    fontSize: "16px",
+  },
+
   list: {
     listStyle: "none",
-    padding: 0
+    padding: 0,
   },
+
   listItem: {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "center",
+    border: "1px solid #ddd",
     padding: "10px",
-    borderBottom: "1px solid #ccc"
+    marginBottom: "10px",
+    borderRadius: "5px",
   },
+
   viewBox: {
     border: "1px solid #ccc",
     padding: "15px",
     marginBottom: "20px",
-    background: "#f9f9f9"
+    borderRadius: "5px",
+    background: "#f8f8f8",
   },
-  viewBtn: {
-    backgroundColor: "#673ab7",
+
+  viewButton: {
+    background: "#673ab7",
     color: "white",
-    marginRight: "5px"
+    border: "none",
+    padding: "6px 10px",
+    marginRight: "5px",
+    cursor: "pointer",
   },
-  editBtn: {
-    backgroundColor: "#2196f3",
+
+  editButton: {
+    background: "#2196f3",
     color: "white",
-    marginRight: "5px"
+    border: "none",
+    padding: "6px 10px",
+    marginRight: "5px",
+    cursor: "pointer",
   },
-  deleteBtn: {
-    backgroundColor: "#f44336",
-    color: "white"
+
+  deleteButton: {
+    background: "#f44336",
+    color: "white",
+    border: "none",
+    padding: "6px 10px",
+    cursor: "pointer",
   },
-  closeBtn: {
-    marginTop: "10px"
-  }
+
+  closeButton: {
+    marginTop: "10px",
+    padding: "8px 15px",
+    background: "#555",
+    color: "white",
+    border: "none",
+    cursor: "pointer",
+  },
 };
 
 export default App;
