@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 // Backend URL
-const API_URL = "http://ec2-ip:5000";
+const API_URL = "http://13.232.163.12:5000";
 
 function App() {
   const [contacts, setContacts] = useState([]);
