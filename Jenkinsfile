@@ -15,12 +15,14 @@ pipeline {
             }
         }
 
+
         stage('Build Docker Images') {
             steps {
                 echo "Building Docker Images..."
                 sh 'docker compose build'
             }
         }
+
 
         stage('Stop Old Containers') {
             steps {
@@ -29,6 +31,7 @@ pipeline {
             }
         }
 
+
         stage('Deploy Application') {
             steps {
                 echo "Starting Containers..."
@@ -36,14 +39,23 @@ pipeline {
             }
         }
 
-        stage('Verify Deployment') {
+
+        stage('Health Check') {
             steps {
-                echo "Running Containers..."
-                sh 'docker ps'
+                echo "Checking Application Health..."
+
+                sh '''
+                sleep 10
+
+                docker compose ps
+
+                curl -f http://localhost:5000 || exit 1
+                '''
             }
         }
 
     }
+
 
     post {
 
