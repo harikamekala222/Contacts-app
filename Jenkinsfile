@@ -1,86 +1,64 @@
 pipeline {
-    agent { label 'agent' }
+
+    agent any
 
     environment {
-        APP_DIR = "/home/ubuntu/app"
-        DATA_DIR = "/home/ubuntu/data"
+        COMPOSE_PROJECT_NAME = "contacts-app"
     }
 
     stages {
 
-        stage('Clone Code') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/harikamekala222/Contacts-app.git'
+                echo "Cloning GitHub Repository..."
+                checkout scm
             }
         }
 
-        stage('Install & Build') {
+        stage('Build Docker Images') {
             steps {
-                sh '''
-                echo "Installing Backend..."
-                cd backend
-                npm install
-
-                echo "Installing Frontend..."
-                cd ../frontend
-                npm install
-
-                echo "Building Frontend..."
-                npm run build
-                '''
+                echo "Building Docker Images..."
+                sh 'docker compose build'
             }
         }
 
-        stage('Deploy Frontend') {
+        stage('Stop Old Containers') {
             steps {
-                sh '''
-                echo "Deploying Frontend..."
-                sudo rm -rf /var/www/html/* || true
-                sudo cp -r frontend/build/* /var/www/html/
-                '''
+                echo "Stopping Existing Containers..."
+                sh 'docker compose down || true'
             }
         }
 
-        stage('Deploy Backend') {
+        stage('Deploy Application') {
             steps {
-                sh '''
-                echo "Creating directories..."
-                mkdir -p $APP_DIR
-                mkdir -p $DATA_DIR
-
-                echo "Copying backend files..."
-                cp -r backend/* $APP_DIR/
-
-                echo "Copying database..."
-                cp backend/db.js $DATA_DIR/
-
-                ls -l $APP_DIR
-                '''
+                echo "Starting Containers..."
+                sh 'docker compose up -d'
             }
         }
 
-        stage('Start Backend') {
+        stage('Verify Deployment') {
             steps {
-                sh '''
-                cd $APP_DIR
-
-                echo "Stopping old backend..."
-                pm2 delete backend || true
-
-                echo "Starting backend..."
-
-                if [ -f index.js ]; then
-                    pm2 start index.js --name backend
-                elif [ -f server.js ]; then
-                    pm2 start server.js --name backend
-                else
-                    echo "No entry file found"
-                    exit 1
-                fi
-
-                pm2 save
-                '''
+                echo "Running Containers..."
+                sh 'docker ps'
             }
         }
+
     }
+
+    post {
+
+        success {
+            echo 'Deployment Successful.'
+        }
+
+        failure {
+            echo 'Deployment Failed.'
+        }
+
+        always {
+            echo 'Pipeline Finished.'
+        }
+
+    }
+
 }
