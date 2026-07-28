@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+
+  backend:
+    build:
+      context: ./backend
+
+    container_name: contacts-backend
+
+    restart: always
+
+    env_file:
+      - ./backend/.env
+
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: ./frontend
+
+    container_name: contacts-frontend
+
+    restart: always
+
+    depends_on:
+      - backend
+
+    ports:
+      - "80:80"
